@@ -6,6 +6,10 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Clase que gestiona los datos de servicio ftp
+ * @author Breogan Fernandez Tacon.
+ */
 public class ClientFtpDataService implements Runnable {
 
     private Socket dataSocket;
@@ -14,6 +18,14 @@ public class ClientFtpDataService implements Runnable {
     private final Object dataChannelLock;
     private final AtomicBoolean dataChannelInUse;
 
+    /**
+     * Constructor parametrizado
+     * @param dataSocket Socket de datos
+     * @param out Stream de salida
+     * @param closeOutput Comprobacion de cierre
+     * @param dataChannelLock Objeto de bloqueo, ayuda a sincronizar los hilos
+     * @param dataChannelInUse Indicador de uso del canal de datos
+     */
     public ClientFtpDataService(Socket dataSocket, OutputStream out, boolean closeOutput,
                                 Object dataChannelLock, AtomicBoolean dataChannelInUse) {
         this.dataSocket = dataSocket;

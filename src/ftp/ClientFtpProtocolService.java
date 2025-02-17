@@ -7,6 +7,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Clase que gestiona el protocolo de servicio de ftp
+ * @author Breogán Fernandez Tacon
+ */
 public class ClientFtpProtocolService implements Runnable {
 
     private Socket controlSocket;
@@ -26,6 +30,12 @@ public class ClientFtpProtocolService implements Runnable {
         this.log = log;
     }
 
+    /**
+     * Conexion al servidor ftp
+     * @param server Servidor al que conectarse
+     * @param port Puerto de conexion
+     * @throws IOException
+     */
     public void connectTo(String server, int port) throws IOException {
         controlSocket = new Socket(server, port);
         controlReader = new BufferedReader(new InputStreamReader(controlSocket.getInputStream()));
@@ -40,7 +50,6 @@ public class ClientFtpProtocolService implements Runnable {
             String line;
             while ((line = controlReader.readLine()) != null) {
                 log.write((line + "\n").getBytes());
-                // Si se recibe el código 227, parseamos para obtener la dirección y puerto del canal de datos.
                 if (line.startsWith("227")) {
                     InetSocketAddress dataAddress = parse227(line);
                     try {
@@ -54,7 +63,6 @@ public class ClientFtpProtocolService implements Runnable {
                 }
             }
         } catch (IOException e) {
-            // Si el socket está cerrado intencionalmente, no se imprime error.
             if (controlSocket != null && !controlSocket.isClosed()) {
                 try {
                     log.write(("Error en el canal de control: " + e.getMessage() + "\n").getBytes());
