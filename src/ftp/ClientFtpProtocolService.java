@@ -36,8 +36,8 @@ public class ClientFtpProtocolService implements Runnable {
 
     @Override
     public void run() {
-        String line;
         try {
+            String line;
             while ((line = controlReader.readLine()) != null) {
                 log.write((line + "\n").getBytes());
                 // Si se recibe el código 227, parseamos para obtener la dirección y puerto del canal de datos.
@@ -54,10 +54,13 @@ public class ClientFtpProtocolService implements Runnable {
                 }
             }
         } catch (IOException e) {
-            try {
-                log.write(("Error en el canal de control: " + e.getMessage() + "\n").getBytes());
-            } catch (IOException ex) {
-                // Ignorar
+            // Si el socket está cerrado intencionalmente, no se imprime error.
+            if (controlSocket != null && !controlSocket.isClosed()) {
+                try {
+                    log.write(("Error en el canal de control: " + e.getMessage() + "\n").getBytes());
+                } catch (IOException ex) {
+                    // Ignorar
+                }
             }
         }
     }
@@ -90,6 +93,13 @@ public class ClientFtpProtocolService implements Runnable {
         if (controlSocket != null && !controlSocket.isClosed()) {
             controlSocket.close();
         }
+        if (controlThread != null) {
+            try {
+                controlThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     public String sendQuit() throws IOException {
@@ -117,7 +127,6 @@ public class ClientFtpProtocolService implements Runnable {
     }
 
     public String sendPassv() throws IOException {
-        // Bloquea hasta que el canal de datos esté libre.
         synchronized (dataChannelLock) {
             while (dataChannelInUse.get()) {
                 try {
@@ -149,7 +158,6 @@ public class ClientFtpProtocolService implements Runnable {
         ClientFtpDataService dataService = new ClientFtpDataService(
                 dataSocket, out, closeOutput, dataChannelLock, dataChannelInUse);
         new Thread(dataService).start();
-        // Reinicia el dataSocket para permitir futuras transferencias.
         dataSocket = null;
         return command;
     }
